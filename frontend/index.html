@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المُحقِّق الدلالي — Semantic Explainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="7" stroke="white" stroke-width="1.5"/>
+        <circle cx="10" cy="10" r="2" fill="white"/>
+        <path d="M10 6v4l2.5 2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">المُحقِّق الدلالي — Semantic Explainer</div>
+      <div class="brand-sub">نظام التحقق الذكي من البيانات الاستبيانية</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="nav-ref" id="navRef">استمارة رقم ٢٠٢٥ - ٠١٢</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="goTo('form')">📋 الاستمارة</button>
+      <button class="nav-tab" onclick="goTo('log')">📊 سجل القرارات</button>
+    </div>
+  </div>
+</nav>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">جاري التحقق من البيانات...</div>
+</div>
+
+<div class="screen active" id="s-form">
+  <div style="max-width:860px;margin:0 auto;padding:36px 20px 80px">
+    <div class="form-page-title">استمارة البيانات الشخصية والمهنية</div>
+    <div class="form-page-sub">يُرجى تعبئة جميع الحقول — سيتم التحقق الذكي من البيانات عند الإرسال</div>
+
+    <div class="form-card">
+      <div class="form-card-head">
+        <h2>استمارة البيانات الشخصية والمهنية</h2>
+        <span class="ref-tag">استمارة رقم ٢٠٢٥ - ٠١٢</span>
+      </div>
+      <div class="form-body">
+
+        <div class="prog-wrap">
+          <div class="prog-meta">
+            <span>اكتمال الاستمارة</span>
+            <strong id="progText">٠ من ٤ حقول</strong>
+          </div>
+          <div class="prog-bg">
+            <div class="prog-fill" id="progBar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>العمر <span class="req">*</span></label>
+            <div class="field-hint">أدخل عمرك بالسنوات الكاملة (٧ - ١٢٠)</div>
+            <input type="number" id="f-age" min="1" max="100" placeholder="مثال: ٢٢" oninput="onInput()">
+          </div>
+          <div class="field">
+            <label>المستوى التعليمي <span class="req">*</span></label>
+            <div class="field-hint">اختر أعلى مستوى تعليمي أتممته</div>
+            <div class="sel-wrap">
+              <select id="f-edu" onchange="onInput()">
+                <option value="">اختر...</option>
+                <option value="primary">ابتدائي</option>
+                <option value="middle">متوسط</option>
+                <option value="high_school">ثانوي</option>
+                <option value="bachelor">بكالوريوس</option>
+                <option value="master">ماجستير</option>
+                <option value="phd">دكتوراه</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>المهنة الحالية <span class="req">*</span></label>
+            <div class="field-hint">اكتب مسمى وظيفتك الحالية</div>
+            <input type="text" id="f-job" placeholder="مثال: مهندس برمجيات أول" oninput="onInput()">
+          </div>
+          <div class="field">
+            <label>سنوات الخبرة <span class="req">*</span></label>
+            <div class="field-hint">إجمالي سنوات العمل في مجالك</div>
+            <input type="number" id="f-exp" min="0" max="60" placeholder="مثال: ١٠" oninput="onInput()">
+          </div>
+        </div>
+
+        <div class="row1">
+          <div class="field">
+            <label>ملاحظات إضافية <span style="color:var(--slate-500);font-weight:400">(اختياري)</span></label>
+            <div class="field-hint">أي معلومات تودّ إضافتها</div>
+            <textarea id="f-notes" placeholder="أي معلومات تودّ إضافتها ..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <div class="form-footer-note">
+            <span>🔒</span>
+            <span>سُتحلَّل بياناتك تلقائياً عند الإرسال</span>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" id="submitBtn" onclick="submitForm()" disabled>
+              إرسال الاستمارة
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-val">
+  <div class="val-modal">
+    <div class="val-modal-top">
+      <div class="val-modal-top-left">
+        <div class="warn-icon">⚠️</div>
+        <div>
+          <div class="val-modal-title">تم اكتشاف تعارض في البيانات</div>
+          <div class="val-modal-sub">الرجاء مراجعة الحقول المشار إليها قبل الإرسال</div>
+        </div>
+      </div>
+      <button class="close-x" onclick="closeOv('ov-val')">✕</button>
+    </div>
+    <div class="val-modal-body">
+
+      <div style="margin-bottom:6px;font-size:11px;font-weight:700;color:var(--slate-500)">نوع المشكلة المكتشفة</div>
+      <div class="type-tags" id="typeTags"></div>
+
+      <div class="issues-cols" id="issuesCols"></div>
+    </div>
+    <div class="val-modal-footer">
+      <button class="btn btn-ghost" onclick="ignoreAndSend()">تجاهل والإرسال على مسؤوليتي</button>
+      <button class="btn btn-orange" onclick="goToCorrection()">تصحيح البيانات</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-corr">
+  <div class="corr-modal">
+    <div class="corr-modal-top">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span class="corr-count-badge" id="corrCount">٢ من الحقول تحتاج تصحيحاً</span>
+        </div>
+        <div class="corr-modal-title">اختر الحقل الذي توّد تصحيحه</div>
+        <div class="corr-modal-sub">لمساعدتك على إدخال بيانات أدق، يعرض النظام بعض الاقتراحات</div>
+      </div>
+      <button class="close-x" onclick="closeOv('ov-corr')">✕</button>
+    </div>
+    <div class="corr-modal-body">
+      <div class="corr-hint">
+        <span>💡</span>
+        <span>لمساعدتك على إدخال بيانات أدق، يعرض النظام بعض الاقتراحات التي يمكنك مراجعتها أو تعديلها</span>
+      </div>
+      <div id="corrFields"></div>
+    </div>
+    <div class="corr-modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeOv('ov-corr');openOv('ov-val')">← العودة للاستمارة</button>
+      <div class="corr-footer-right">
+        <button class="btn btn-ghost btn-sm" onclick="saveCorrections()">حفظ التصحيحات</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmAndRecheck()">تأكيد وإعادة تحقق ☑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-success">
+  <div style="max-width:760px;margin:0 auto;padding:60px 20px">
+    <div style="text-align:center;margin-bottom:10px;font-size:12px;color:var(--slate-500)">
+      نظام التحقق الذكي من البيانات الاستبيانية
+    </div>
+    <div style="text-align:center;font-size:16px;font-weight:800;color:var(--navy);margin-bottom:32px">
+      تأكيد القبول الناجح
+    </div>
+    <div class="success-card">
+      <div class="success-check">✅</div>
+      <div class="success-title">تم إرسال الاستمارة بنجاح</div>
+      <div class="success-desc">
+        تمت مراجعة بياناتك والتحقق من اتساقها الداخلي.<br>
+        جميع الحقول مقبولة ومطابقة للمعايير المطلوبة. سيتم التواصل معك خلال ٣-٥ أيام عمل.
+      </div>
+      <div class="success-stats" id="successStats">
+        <div class="sstat"><div class="sstat-val">٤</div><div class="sstat-key">حقول تم التحقق منها</div></div>
+        <div class="sstat"><div class="sstat-val" id="ss-corr">٠</div><div class="sstat-key">تصحيحات تمت</div></div>
+        <div class="sstat"><div class="sstat-val" style="color:var(--green)">٩٦٪</div><div class="sstat-key">درجة جودة البيانات</div></div>
+        <div class="sstat"><div class="sstat-val" style="font-size:18px" id="ss-time">٠٠:٠٠</div><div class="sstat-key">وقت التعبئة</div></div>
+      </div>
+      <div class="ref-box">رقم المرجع: <code id="successRef">SE-2025-001247</code></div>
+      <div class="success-actions">
+        <button class="btn btn-navy btn-lg" onclick="goTo('form');resetForm()">العودة للرئيسية</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-log">
+  <div style="max-width:1040px;margin:0 auto;padding:36px 20px 80px">
+
+    <div class="log-header">
+      <div class="log-header-left">
+        <h1>لوحة سجل القرارات</h1>
+        <p>نظام التحقق الذكي من البيانات الاستبيانية</p>
+      </div>
+      <div class="log-header-right">
+        <button class="btn btn-primary btn-sm" onclick="goTo('form')">+ استمارة جديدة</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="sv" id="st-total">٠</div>
+        <div class="sk">إجمالي الاستمارات</div>
+        <div class="sd sd-green">↑ ١٣٪ هذا الشهر</div>
+      </div>
+      <div class="stat-box">
+        <div class="sv" style="color:var(--orange)" id="st-issues">٠</div>
+        <div class="sk">حالات تعارض مكتشفة</div>
+        <div class="sd sd-red">↓ ٥٪ عن الشهر الماضي</div>
+      </div>
+      <div class="stat-box">
+        <div class="sv" style="color:var(--green)" id="st-accepted">٠٪</div>
+        <div class="sk">معدل القبول بعد التصحيح</div>
+        <div class="sd sd-green">↑ ٥٪ تحسّن</div>
+      </div>
+      <div class="stat-box">
+        <div class="sv" style="color:var(--blue);font-size:22px" id="st-speed">٠ ث</div>
+        <div class="sk">متوسط وقت التحقق</div>
+        <div class="sd sd-green">↑ أسرع بـ ١٤٪</div>
+      </div>
+    </div>
+
+    <div class="log-panel">
+      <div class="log-panel-head">
+        <div class="log-panel-title">سجل قرارات التحقق الدلالي</div>
+        <div class="filters-row">
+          <input class="filter-input" type="text" placeholder="🔍 بحث برقم المرجع..." id="filterSearch" oninput="renderLog()">
+          <select class="filter-select" id="filterStatus" onchange="renderLog()">
+            <option value="">جميع الحالات</option>
+            <option value="مقبول">مقبول</option>
+            <option value="مُصحَّح">مُصحَّح</option>
+            <option value="مرفوض">مرفوض</option>
+            <option value="معلّق">معلّق</option>
+          </select>
+          <select class="filter-select" id="filterType" onchange="renderLog()">
+            <option value="">نوع التعارض</option>
+            <option value="logic">منطقي</option>
+            <option value="semantic">دلالي</option>
+            <option value="stat">إحصائي</option>
+          </select>
+        </div>
+      </div>
+      <div id="logBody"></div>
+      <div class="table-foot">
+        <p id="logCount">عرض ٠ من أصل ٠ سجلاً</p>
+        <div class="pagination">
+          <button class="pag-btn">‹</button>
+          <button class="pag-btn active">١</button>
+          <button class="pag-btn">٢</button>
+          <button class="pag-btn">٣</button>
+          <button class="pag-btn">…</button>
+          <button class="pag-btn">١٢٥</button>
+          <button class="pag-btn">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="script.js"></script>
+</body>
+</html>
