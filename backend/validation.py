@@ -108,7 +108,7 @@ def base_rules(row):
 def make_prompt(row, rules):
     return f'''
 أنت مساعد تحقق دلالي لنماذج الاستبيانات.
-افحص السجل التالي واكشف فقط التعارضات المنطقية أو الدلالية الحقيقية بين العمر والتعليم والمسمى الوظيفي والخبرة والملاحظات.
+افحص السجل التالي واكشف فقط التعارضات المنطقية أو الدلالية الحقيقية بين العمر والتعليم والمسمى الوظيفي والخبرة.
 
 السجل:
 {json.dumps(row, ensure_ascii=False)}
@@ -124,7 +124,7 @@ def make_prompt(row, rules):
       "rule": "اسم قصير",
       "fields": ["age","education"],
       "severity": "low أو medium أو high",
-      "reason": "شرح عربي واضح ومباشر",
+      "reason": "شرح عربي واضح",
       "suggestions": [
         {{
           "field": "education",
@@ -136,15 +136,6 @@ def make_prompt(row, rules):
     }}
   ]
 }}
-
-قواعد مهمة:
-- لا تكرر نفس المشكلة بصيغ مختلفة.
-- لا تعط اقتراحات متناقضة.
-- العمر هو المرجع الأقوى عند وجود تعارض قوي.
-- لا ترفع التعليم لطفل إلى بكالوريوس أو ماجستير أو دكتوراه.
-- إذا كان المسمى الوظيفي لا يناسب العمر الصغير اقترح وظيفة مثل طالب.
-- إذا كانت القواعد اكتشفت نفس المشكلة نفسها فلا تعيدها مرة ثانية.
-- إذا لم توجد مشكلة أعد issues كمصفوفة فارغة.
 '''
 
 def parse_json_text(txt):
@@ -168,7 +159,6 @@ def ask_llm(row, rules):
     if not key:
         raise Exception("GEMINI_API_KEY not found")
 
-    print("GEMINI ON")
     client = genai.Client(api_key=key)
     response = client.models.generate_content(
         model=model,
@@ -259,11 +249,93 @@ def quality_score(items):
             s -= 0.08
     return round(max(0.10, s), 2)
 
+def review_prompt(row, rules):
+    return f'''
+أنت محكّم دقيق لنظام فحص استبيانات.
+
+السجل:
+{json.dumps(row, ensure_ascii=False)}
+
+المشكلات:
+{json.dumps(rules, ensure_ascii=False)}
+
+أعد JSON فقط:
+{{
+  "reviewed": [
+    {{
+      "rule": "",
+      "fields": [],
+      "verdict": "valid أو incorrect",
+      "reason": "",
+      "suggestion": {{}}
+    }}
+  ]
+}}
+'''
+
+def review_rules_with_llm(row, rules):
+    if not rules:
+        return rules
+
+    key = os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+
+    if not key:
+        raise Exception("GEMINI_API_KEY not found")
+
+    client = genai.Client(api_key=key)
+    response = client.models.generate_content(
+        model=model,
+        contents=review_prompt(row, rules)
+    )
+
+    txt = getattr(response, "text", "") or ""
+    if not txt:
+        raise ValueError("Empty response")
+
+    data = parse_json_text(txt)
+    reviewed = data.get("reviewed", [])
+
+    verdict_map = {
+        (r.get("rule", ""), tuple(sorted(r.get("fields", [])))): r
+        for r in reviewed
+    }
+
+    kept = []
+
+    for issue in rules:
+        key = (issue.get("rule", ""), tuple(sorted(issue.get("fields", []))))
+        verdict_info = verdict_map.get(key)
+
+        if not verdict_info:
+            kept.append(issue)
+            continue
+
+        if verdict_info.get("verdict") == "incorrect":
+            continue
+
+        updated = dict(issue)
+
+        if verdict_info.get("reason"):
+            updated["reason"] = verdict_info["reason"]
+
+        if verdict_info.get("suggestion"):
+            updated["suggestion"] = verdict_info["suggestion"]
+
+        kept.append(updated)
+
+    return kept
+
 def check_data(row):
     rules = base_rules(row)
     llm_error = ""
 
     try:
+        try:
+            rules = review_rules_with_llm(row, rules)
+        except:
+            pass
+
         llm_raw = ask_llm(row, rules)
         llm_raw = strip_llm_dupes(llm_raw, rules)
         source = "llm+rules" if llm_raw else "rules+llm"
@@ -271,7 +343,6 @@ def check_data(row):
         llm_raw = []
         source = "rules"
         llm_error = str(e)
-        print("GEMINI ERROR:", e)
 
     items = [to_ui(x, row) for x in rules] + [to_ui(x, row) for x in llm_raw]
     items = dedupe(items)
